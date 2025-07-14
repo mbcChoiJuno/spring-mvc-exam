@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="org.spring.exam.models.board.repository.IBoardMapper">
+
+	<!-- 1. 게시글 작성 ( 제목, 내용, 작성자 ) -->
+	<insert id="postBoard">
+		<![CDATA[
+			INSERT INTO board_tbl (
+				board_index, 
+				board_title,
+				board_content,
+				user_id )
+			VALUES (board_seq.nextval, 
+			#{title}, 
+			#{content}, 
+			#{writer} )
+		]]>
+	</insert>
+	
+	<!-- 2. 게시글 목록 조회 -->
+	<select id="getBoardList" resultType="org.spring.exam.models.board.domain.BoardVO">
+		<![CDATA[
+			SELECT * FROM (
+				SELECT 
+					board_index as boardIndex,
+					board_child_count as childCount,
+					board_title as title,
+					board_content as content,
+					board_view_count as viewCount,
+					board_update_date as updateDate,
+					deleted as deletedYn,
+					user_name as writer
+				FROM board_tbl B JOIN user_tbl U
+					ON B.user_id = U.user_id
+				ORDER BY board_index DESC
+			)
+			ORDER BY ROWNUM
+		]]>
+	</select>
+	
+	<!-- 3. 게시글 상세 조회 ( 보드 ID ) -->
+	<select id="getBoardDetail" resultType="org.spring.exam.models.board.domain.BoardVO">
+		<![CDATA[
+			SELECT 
+				board_index as boardIndex,
+				board_child_count as childCount,
+				board_title as title,
+				board_content as content,
+				board_view_count as viewCount,
+				board_create_date as createDate,
+				board_update_date as updateDate,
+				deleted as deletedYn,
+				user_name as writer
+			FROM board_tbl B JOIN user_tbl U
+				ON B.user_id = U.user_id
+			WHERE
+				board_index = #{boardIndex}
+		]]>
+	</select>
+	
+	<!-- 3. 게시글 조회시 조회수 업데이트 ( 보드 ID ) -->
+	<update id="increaseViewCount" parameterType="long">
+		<![CDATA[
+			UPDATE board_tbl 
+			
+			SET
+				board_view_count = board_view_count + 1
+			
+			WHERE board_index = #{boardIndex}
+		]]>
+	</update>
+	
+	<!-- 4. 게시글 수정 ( 제목, 내용, 보드ID ) -->
+	<update id="modifyBoard">
+		<![CDATA[
+			UPDATE board_tbl 
+			
+			SET
+				board_title = #{title},
+				board_content = #{content},
+				board_update_date = SYSDATE
+			
+			WHERE 
+				board_index = #{boardIndex}
+		]]>
+	</update>
+	
+	<!-- 5. 게시글 SOFT 삭제 ( 보드 ID ) -->
+	<update id="deleteBoard">
+		<![CDATA[
+			UPDATE board_tbl 
+			SET
+				deleted = 'Y'
+			
+			WHERE board_index = #{boardIndex}
+		]]>
+	</update>
+	
+</mapper>
